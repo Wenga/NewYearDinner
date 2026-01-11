@@ -201,6 +201,9 @@
       justify-content:center;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     /* 金蛋本体 */
@@ -596,6 +599,15 @@
       setProgress();
       updateCracks();
     })();
+    // ✅ 防止移动端双击缩放（主要针对 iOS Safari）
+      let lastTap = 0;
+      eggBtn.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          e.preventDefault(); // 阻止 double-tap zoom
+        }
+        lastTap = now;
+      }, { passive: false });
   </script>
 </body>
 </html>
