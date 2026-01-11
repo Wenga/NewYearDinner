@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>新春金蛋孵化 | Lunar New Year Golden Egg</title>
+  <title>新春金蛋孵化 | New Year Golden Egg</title>
   <style>
     :root{
       --bg1:#4b0006;
@@ -140,6 +140,31 @@
       position:relative;
     }
 
+    /* 孵化结果马图显示在舞台中央 */
+    .hatchedHorse{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%, -52%) scale(.92);
+      width: 78%;
+      height: auto;
+      max-height: 85%;
+      object-fit: contain;
+      display:none;              /* 默认隐藏 */
+      pointer-events:none;
+      filter: drop-shadow(0 18px 35px rgba(0,0,0,.35));
+    }
+
+    .hatchedHorse.show{
+      display:block;
+      animation: horsePop .42s ease-out forwards;
+    }
+
+    @keyframes horsePop{
+      0%   { transform: translate(-50%, -52%) scale(.72); opacity: 0; }
+      100% { transform: translate(-50%, -52%) scale(1);   opacity: 1; }
+    }
+
     /* 金蛋舞台 */
     .stage{
       width:min(320px, 86vw);
@@ -151,11 +176,11 @@
     }
     .glow{
       position:absolute;
-      width:110%;
-      height:85%;
-      background:radial-gradient(closest-side, rgba(255,220,120,.35), transparent 70%);
-      filter:blur(2px);
-      opacity:.9;
+      width: 160%;
+      height: 130%;
+      background:radial-gradient(closest-side, rgba(255,220,120,.7), transparent 68%);
+      filter:blur(10px);
+      opacity:1;
       pointer-events:none;
       animation:pulse 2.2s ease-in-out infinite;
     }
@@ -255,7 +280,6 @@
       line-height:1.25;
     }
 
-    /* 结果卡片 */
     .result{
       width:min(360px, 92vw);
       background:rgba(255,255,255,.10);
@@ -271,20 +295,6 @@
       display:flex;
       align-items:center;
       gap:12px;
-    }
-    .badge{
-      width:54px; height:54px;
-      border-radius:16px;
-      background:
-        radial-gradient(20px 20px at 30% 30%, rgba(255,255,255,.35), transparent 55%),
-        linear-gradient(180deg, var(--gold1), var(--gold3));
-      border:1px solid rgba(255,240,180,.5);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:var(--ink);
-      font-weight:800;
-      font-size:18px;
     }
     .result h2{
       margin:0;
@@ -323,15 +333,6 @@
       border:1px solid rgba(255,235,180,.25);
       color:var(--paper);
     }
-
-    footer{
-      position:absolute;
-      left:18px; right:18px; bottom:16px;
-      text-align:center;
-      font-size:11px;
-      opacity:.65;
-      line-height:1.25;
-    }
   </style>
 </head>
 
@@ -347,7 +348,7 @@
     <header>
       <div class="kicker">
         新春好运
-        <span class="en">Lunar New Year Blessings</span>
+        <span class="en">New Year Blessings</span>
       </div>
 
       <h1>
@@ -377,6 +378,7 @@
             </svg>
           </div>
         </button>
+        <img id="hatchedHorse" class="hatchedHorse" alt="" />
       </div>
 
       <div class="cta">
@@ -385,22 +387,22 @@
           <span class="en">Tap the golden egg to begin</span>
         </div>
         <div class="meter" id="meter">
-          进度：0 / 12
-          <span class="en">Progress: 0 / 12</span>
+          进度：0 / 6
+          <span class="en">Progress: 0 / 6</span>
         </div>
       </div>
 
       <section class="result" id="result" aria-live="polite">
         <div class="row">
-          <div class="badge" id="badge">灵</div>
+
           <div>
             <h2 id="animalTitle">
-              你的灵兽已出现
-              <span class="en">Your spirit animal has appeared</span>
+              你成功孵化出：
+              <span class="en">You successfully hatched:</span>
             </h2>
             <p id="animalLine">
-              愿你新年顺遂，所求皆有回应。
-              <span class="en">May your new year be smooth, and may your wishes be answered.</span>
+              祝福语会显示在这里
+              <span class="en">Your blessing will appear here</span>
             </p>
           </div>
         </div>
@@ -416,12 +418,10 @@
           </div>
         </div>
       </section>
+
     </main>
 
-    <footer>
-      可用于活动页 / 小游戏入口 / 新年祝福互动卡
-      <span class="en">Great for landing pages, mini-games, and shareable New Year blessing cards</span>
-    </footer>
+
   </div>
 
   <script>
@@ -432,13 +432,13 @@
       const hint = document.getElementById('hint');
       const meter = document.getElementById('meter');
       const result = document.getElementById('result');
+      const hatchedHorse = document.getElementById('hatchedHorse');
       const animalTitle = document.getElementById('animalTitle');
       const animalLine = document.getElementById('animalLine');
-      const badge = document.getElementById('badge');
       const resetBtn = document.getElementById('resetBtn');
       const shareBtn = document.getElementById('shareBtn');
 
-      const HATCH_AT = 12;
+      const HATCH_AT = 6;
       let taps = 0;
       let hatched = false;
 
@@ -451,16 +451,26 @@
         done:  { zh:"孵化完成", en:"Hatching complete" }
       };
 
-      // 你可以替换成“十二生肖 / 自定义灵兽”
+      // 自定义灵兽”
       const animals = [
-        { zhName:"祥云白鹿", enName:"Cloud-Blessed White Deer", badge:"鹿",
-          zhLine:"稳住节奏，福气会慢慢靠近。", enLine:"Stay steady — good fortune is on its way." },
-        { zhName:"金麟小狮", enName:"Golden-Scaled Little Lion", badge:"狮",
-          zhLine:"勇气开场，贵人跟随，事事有回响。", enLine:"Lead with courage — support and momentum will follow." },
-        { zhName:"瑞火凤凰", enName:"Auspicious Fire Phoenix", badge:"凤",
-          zhLine:"越是热爱，越能点亮今年的好运。", enLine:"The more you love, the brighter your luck becomes." },
-        { zhName:"踏风天马", enName:"Wind-Striding Celestial Horse", badge:"马",
-          zhLine:"轻装前行，速度与好运都会追上你。", enLine:"Travel light — speed and luck will catch up to you." }
+        { zhName:"福运灵马", enName:"Lucky Spirit Horse", 
+          image: "LuckyHorse.png",
+          zhLine:"福气相随，好运常在。", enLine:"Blessings follow, good fortune stays." },
+        { zhName:"金财瑞马", enName:"Golden Wealth Horse", 
+          image: "WealthHorse.png",
+          zhLine:"财运丰盈，收获满满。", enLine:"Prosperity flows, abundance grows." },
+        { zhName:"瑞玉守马", enName:"Jade Guardian Horse", 
+          image: "JadeHorse.png",
+          zhLine:"平安守护，家和人安。", enLine:"Peace protected, harmony within." },
+        { zhName:"祥云风马", enName:"Auspicious Cloud Horse", 
+          image: "CloudHorse.png",        
+          zhLine:"祥云相伴，万事顺遂。", enLine:"Auspicious signs guide your way." },
+        { zhName:"喜庆灯马", enName:"Joyful Lantern Horse", 
+          image: "LanternHorse.png",
+          zhLine:"灯火团圆，欢喜满堂。", enLine:"Joy lights up every gathering." },
+        { zhName:"吉星夜马", enName:"Fortune Star Horse", 
+          image: "StarHorse.png",
+          zhLine:"吉星高照，心愿可期。", enLine:"Lucky stars, wishes await." },
       ];
 
       function setHint(key){
@@ -475,8 +485,8 @@
       function updateCracks(){
         cracks.classList.remove('show1','show2');
         if (!hatched){
-          if (taps >= 10) cracks.classList.add('show2');
-          else if (taps >= 6) cracks.classList.add('show1');
+          if (taps >= 5) cracks.classList.add('show2');
+          else if (taps >= 3) cracks.classList.add('show1');
         }
       }
 
@@ -499,10 +509,16 @@
         cracks.style.opacity = 0;
 
         const pick = animals[Math.floor(Math.random()*animals.length)];
-        badge.textContent = pick.badge;
+
+        //显示舞台中央马图
+        hatchedHorse.src = pick.image;
+        hatchedHorse.alt = `${pick.zhName} / ${pick.enName}`;
+        hatchedHorse.classList.remove('show');
+        void hatchedHorse.offsetWidth; // 触发动效重播
+        hatchedHorse.classList.add('show');
 
         animalTitle.innerHTML =
-          `你孵化出：${pick.zhName}<span class="en">You hatched: ${pick.enName}</span>`;
+          `你成功孵化出：${pick.zhName}<span class="en">You successfully hatched: ${pick.enName}</span>`;
 
         animalLine.innerHTML =
           `${pick.zhLine}<span class="en">${pick.enLine}</span>`;
@@ -516,6 +532,9 @@
       function reset(){
         taps = 0;
         hatched = false;
+        hatchedHorse.classList.remove('show');
+        hatchedHorse.removeAttribute('src');
+        hatchedHorse.alt = "";
         egg.style.transition = "";
         egg.style.opacity = 1;
         egg.style.transform = "";
@@ -541,8 +560,8 @@
         spawnSpark(e.clientX - rect.left, e.clientY - rect.top);
 
         if (taps === 1) setHint('keep');
-        if (taps === 6) setHint('mid');
-        if (taps === 10) setHint('near');
+        if (taps === 3) setHint('mid');
+        if (taps === 5) setHint('near');
 
         if (taps >= HATCH_AT) hatch();
       });
