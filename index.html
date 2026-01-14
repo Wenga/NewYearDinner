@@ -569,6 +569,15 @@
         if (taps >= HATCH_AT) hatch();
       });
 
+      //防止移动端双击缩放（主要针对 iOS Safari）
+      let lastTap = 0;
+      eggBtn.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          e.preventDefault(); // 阻止 double-tap zoom
+        }
+        lastTap = now;
+      }, { passive: false });
       resetBtn.addEventListener('click', reset);
 
       shareBtn.addEventListener('click', async ()=>{
@@ -599,15 +608,7 @@
       setProgress();
       updateCracks();
     })();
-    // ✅ 防止移动端双击缩放（主要针对 iOS Safari）
-      let lastTap = 0;
-      eggBtn.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - lastTap < 300) {
-          e.preventDefault(); // 阻止 double-tap zoom
-        }
-        lastTap = now;
-      }, { passive: false });
+    
   </script>
 </body>
 </html>
