@@ -36,6 +36,12 @@
       padding:18px 18px 22px;
       position:relative;
       overflow:hidden;
+
+      /* 关键：给截图根节点也加背景*/
+      background:
+        radial-gradient(900px 900px at 50% -10%, rgba(255,210,120,.25), transparent 60%),
+        radial-gradient(700px 700px at 10% 20%, rgba(255,180,180,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
     }
 
     /* 暗纹 */
@@ -336,11 +342,28 @@
       border:1px solid rgba(255,235,180,.25);
       color:var(--paper);
     }
+    /* 截图模式：冻结动画 & 强制最终布局 */
+    .screenshot-mode .lantern,
+    .screenshot-mode .glow,
+    .screenshot-mode .egg,
+    .screenshot-mode .hatchedHorse{
+      animation: none !important;
+    }
+
+    /* 强制神兽截图时稳定居中 */
+    .screenshot-mode .hatchedHorse{
+      opacity: 1 !important;
+      transform: translate(-50%, -52%) scale(1) !important;
+      filter: none !important;
+      animation: none !important;
+      will-change: auto !important; /* 避免浏览器合成层导致偶发差异 */
+    }
+
   </style>
 </head>
 
 <body>
-  <div class="screen">
+  <div class="screen" id="captureRoot">
     <div class="pattern"></div>
 
     <div class="lanterns" aria-hidden="true">
@@ -416,8 +439,8 @@
             <span class="en">Hatch again</span>
           </div>
           <div class="btn ghost" id="shareBtn">
-            复制祝福语
-            <span class="en">Copy blessing</span>
+            截图保存页面
+            <span class="en">Save screenshot</span>
           </div>
         </div>
       </section>
@@ -426,6 +449,8 @@
 
 
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <script>
     (function(){
@@ -578,28 +603,149 @@
         }
         lastTap = now;
       }, { passive: false });
-      
+
       resetBtn.addEventListener('click', reset);
-      shareBtn.addEventListener('click', async ()=>{
-        const text =
-          `${animalTitle.textContent} | ${animalLine.textContent}`;
-        try{
-          await navigator.clipboard.writeText(text);
-          shareBtn.innerHTML = `已复制<span class="en">Copied</span>`;
-          setTimeout(()=> {
-            shareBtn.innerHTML = `复制祝福语<span class="en">Copy blessing</span>`;
-          }, 1200);
-        }catch{
-          const ta = document.createElement('textarea');
-          ta.value = text;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          ta.remove();
-          shareBtn.innerHTML = `已复制<span class="en">Copied</span>`;
-          setTimeout(()=> {
-            shareBtn.innerHTML = `复制祝福语<span class="en">Copy blessing</span>`;
-          }, 1200);
+      const captureRoot = document.getElementById('captureRoot');
+      const stage = document.querySelector('.stage');
+
+      shareBtn.addEventListener('click', async () => {
+        // 还没孵化就截图：你可以允许，也可以提示先孵化
+        // if (!hatched) return;
+
+        const oldHTML = shareBtn.innerHTML;
+        shareBtn.innerHTML = `正在生成图片…<span class="en">Rendering…</span>`;
+        shareBtn.style.pointerEvents = 'none';
+
+        try {
+          // 进入截图模式（冻结动画）
+          document.body.classList.add('screenshot-mode');
+          // 截图前：固化 stage 的高度，避免 html2canvas 不支持 aspect-ratio 导致定位错乱
+          const prevStageHeight = stage.style.height;
+          const prevStageAspect = stage.style.aspectRatio;
+
+          const stageW = stage.getBoundingClientRect().width;
+          // 你的 aspect-ratio 是 1 / 1.15，所以高度 = 宽度 * 1.15
+          stage.style.height = `${Math.round(stageW * 1.15)}px`;
+          stage.style.aspectRatio = 'auto';
+
+          // 等一帧让布局生效
+          await new Promise(r => requestAnimationFrame(r));
+
+          // 等神兽图片 decode 完成（防止资源未就绪）
+          if (hatchedHorse && hatchedHorse.src) {
+            try { await hatchedHorse.decode(); } catch(e) {}
+          }
+
+          // 1) 克隆截图根节点，放到一个“干净的固定定位舞台”里
+          const clone = captureRoot.cloneNode(true);
+
+          // 让 clone 里的神兽也保持显示（因为克隆时 class/inline 都会带上，但保险起见）
+          const clonedHorse = clone.querySelector('#hatchedHorse');
+          if (clonedHorse && hatchedHorse && hatchedHorse.src) {
+            clonedHorse.src = hatchedHorse.src;
+            clonedHorse.classList.add('show');
+            // 强制最终 transform（避免偶发 transform 丢失）
+            clonedHorse.style.display = 'block';
+            clonedHorse.style.left = '50%';
+            clonedHorse.style.top = '50%';
+            clonedHorse.style.transform = 'translate(-50%, -52%) scale(1)';
+            clonedHorse.style.filter = 'none';
+            clonedHorse.style.animation = 'none';
+          }
+
+          // 2) 截图时隐藏 clone 内的按钮区（不影响原页面布局）
+          const cloneActions = clone.querySelector('.actions');
+          if (cloneActions) cloneActions.style.visibility = 'hidden';
+
+          // 3) 创建一个离屏容器承载 clone（关键：固定在 0,0，避免任何居中/滚动干扰）
+          const sandbox = document.createElement('div');
+          sandbox.style.position = 'fixed';
+          sandbox.style.left = '0';
+          sandbox.style.top = '0';
+          sandbox.style.width = '430px';         // 与你 .screen 的最大宽一致
+          sandbox.style.zIndex = '-1';           // 不挡交互
+          sandbox.style.pointerEvents = 'none';
+          sandbox.style.opacity = '0';           // 不可见，但仍可渲染
+          sandbox.appendChild(clone);
+          document.body.appendChild(sandbox);
+
+          // 等待一帧，确保 clone 完整布局
+          await new Promise(r => requestAnimationFrame(r));
+
+          // 4) 对 clone 截图
+          const canvas = await html2canvas(clone, {
+            backgroundColor: null,
+            scale: 2,
+            useCORS: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: document.documentElement.clientWidth,
+            windowHeight: document.documentElement.clientHeight
+          });
+
+          // 5) 清理 sandbox
+          document.body.removeChild(sandbox);
+          // 截图后：还原 stage 样式
+          stage.style.height = prevStageHeight;
+          stage.style.aspectRatio = prevStageAspect;
+
+
+          const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
+          if (!blob) throw new Error('toBlob failed');
+
+          const fileName = `NewYearHorse_${Date.now()}.png`;
+          const file = new File([blob], fileName, { type: 'image/png' });
+
+          // 优先：系统分享（iOS/Android 支持时可直接“存储到照片/相册”）
+          const canShareFile =
+            navigator.canShare &&
+            navigator.canShare({ files: [file] }) &&
+            navigator.share;
+
+          if (canShareFile) {
+            await navigator.share({
+              files: [file],
+              title: '新春灵兽',
+              text: '保存这张新春截图到相册吧'
+            });
+            shareBtn.innerHTML = `已打开分享<span class="en">Shared</span>`;
+            setTimeout(() => { shareBtn.innerHTML = oldHTML; }, 1400);
+            return;
+          }
+
+          // 备选：下载/打开图片
+          const url = URL.createObjectURL(blob);
+
+          // iOS Safari 对 download 支持不稳定：通常更可靠的是打开新窗口让用户长按保存
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          if (isIOS) {
+            window.open(url, '_blank');
+            shareBtn.innerHTML = `已打开图片，请长按保存<span class="en">Open & long-press to save</span>`;
+            setTimeout(() => { shareBtn.innerHTML = oldHTML; }, 2200);
+            // 不要立刻 revoke（新窗口可能还在读）
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+            return;
+          }
+
+          // Android/桌面：用 a[download] 触发下载
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+
+          shareBtn.innerHTML = `已下载图片<span class="en">Downloaded</span>`;
+          setTimeout(() => { shareBtn.innerHTML = oldHTML; }, 1400);
+
+        } catch (err) {
+          console.error(err);
+          shareBtn.innerHTML = `生成失败，请重试<span class="en">Failed</span>`;
+          setTimeout(() => { shareBtn.innerHTML = oldHTML; }, 1600);
+        } finally {
+          document.body.classList.remove('screenshot-mode');
+          shareBtn.style.pointerEvents = '';
         }
       });
 
