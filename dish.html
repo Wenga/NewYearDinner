@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>晚宴料理介绍 | Dinner Dish</title>
+
+  <style>
+    :root{
+      --bg1:#4b0006;
+      --bg2:#b10012;
+      --gold1:#ffef9a;
+      --gold2:#ffcc4d;
+      --gold3:#b7791f;
+      --ink:#120002;
+      --paper:#fff7e6;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      color:var(--paper);
+      min-height:100vh;
+      background:
+        radial-gradient(900px 900px at 50% -10%, rgba(255,210,120,.25), transparent 60%),
+        radial-gradient(700px 700px at 10% 20%, rgba(255,180,180,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+      display:flex;
+      justify-content:center;
+    }
+
+    .screen{
+      width:min(430px, 100%);
+      min-height:100vh;
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+      background:
+        radial-gradient(900px 900px at 50% -10%, rgba(255,210,120,.25), transparent 60%),
+        radial-gradient(700px 700px at 10% 20%, rgba(255,180,180,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+    }
+
+    .pattern{
+      position:absolute; inset:-40px;
+      background:
+        radial-gradient(18px 18px at 20% 25%, rgba(255,255,255,.05) 0 2px, transparent 3px),
+        radial-gradient(18px 18px at 60% 45%, rgba(255,255,255,.04) 0 2px, transparent 3px),
+        radial-gradient(18px 18px at 80% 70%, rgba(255,255,255,.03) 0 2px, transparent 3px);
+      pointer-events:none;
+      opacity:.9;
+    }
+
+    /* 顶部灯笼 */
+    .lanterns{
+      position:absolute;
+      top:-6px; left:0; right:0;
+      display:flex;
+      justify-content:space-between;
+      padding:0 8px;
+      pointer-events:none;
+      opacity:.9;
+    }
+    .lantern{
+      width:44px; height:62px;
+      position:relative;
+      filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));
+      animation:sway 2.6s ease-in-out infinite;
+      transform-origin:50% 0%;
+    }
+    .lantern::before{
+      content:"";
+      position:absolute; inset:10px 6px 10px;
+      background:linear-gradient(180deg,#e21a2b,#940012);
+      border-radius:16px;
+      border:1px solid rgba(255,220,140,.35);
+    }
+    .tassel{
+      position:absolute; left:50%; bottom:0;
+      width:10px; height:18px;
+      transform:translateX(-50%);
+      background:linear-gradient(180deg, rgba(255,220,140,.65), rgba(255,220,140,.15));
+      border-radius:0 0 10px 10px;
+    }
+    @keyframes sway{
+      0%,100%{ transform:rotate(-2deg); }
+      50%{ transform:rotate(2deg); }
+    }
+
+    header{
+      text-align:center;
+      padding-top:8px;
+    }
+    .kicker{
+      letter-spacing:.22em;
+      font-size:12px;
+      opacity:.9;
+    }
+    h1{
+      margin:14px 0 8px;
+      font-size:22px;
+      font-weight:800;
+    }
+    .sub{
+      font-size:13px;
+      opacity:.86;
+      line-height:1.5;
+    }
+    .en{
+      display:block;
+      margin-top:4px;
+      font-size:.82em;
+      opacity:.75;
+    }
+
+    main{
+      margin-top:22px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:16px;
+    }
+
+    .card{
+      width:min(380px, 92vw);
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,235,180,.25);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 14px 30px rgba(0,0,0,.25);
+      backdrop-filter:blur(6px);
+    }
+    .card p{
+      margin:0;
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .btn{
+      width:min(380px, 92vw);
+      border-radius:14px;
+      padding:12px;
+      font-size:13px;
+      text-align:center;
+      cursor:pointer;
+      user-select:none;
+      line-height:1.15;
+      background:linear-gradient(180deg, rgba(255,235,180,.95), rgba(255,200,90,.92));
+      color:var(--ink);
+      border:1px solid rgba(255,245,200,.45);
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+    }
+    .btn .en{ margin-top:4px; }
+
+    /* 隐藏的相机 input */
+    input[type="file"]{ display:none; }
+  </style>
+</head>
+
+<body>
+  <div class="screen">
+    <div class="pattern"></div>
+
+    <div class="lanterns" aria-hidden="true">
+      <div class="lantern"><div class="tassel"></div></div>
+      <div class="lantern"><div class="tassel"></div></div>
+    </div>
+
+    <header>
+      <div class="kicker">
+        今晚料理
+        <span class="en">Tonight’s Dish</span>
+      </div>
+
+      <h1>
+        松露菌菇炖饭
+        <span class="en">Truffle Mushroom Risotto</span>
+      </h1>
+
+      <p class="sub">
+        米粒外柔内韧，菌菇与松露香气层层展开。
+        <span class="en">
+          Creamy yet structured, layered with mushrooms and truffle aroma.
+        </span>
+      </p>
+    </header>
+
+    <main>
+      <section class="card">
+        <p>
+          请为眼前的料理拍一张照片，留下这一刻。
+          <span class="en">Take a photo to capture this moment.</span>
+        </p>
+      </section>
+
+      <div class="btn" id="cameraBtn">
+        打开照相机
+        <span class="en">Open camera</span>
+      </div>
+
+      <input
+        id="cameraInput"
+        type="file"
+        accept="image/*"
+        capture="environment"
+      />
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      const cameraBtn = document.getElementById('cameraBtn');
+      const cameraInput = document.getElementById('cameraInput');
+
+      cameraBtn.addEventListener('click', () => {
+        cameraInput.click();
+      });
+    })();
+  </script>
+</body>
+</html>
