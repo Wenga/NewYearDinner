@@ -735,16 +735,33 @@
             navigator.canShare({ files: [file] }) &&
             navigator.share;
 
+          // if (canShareFile) {
+          //   await navigator.share({
+          //     files: [file],
+          //     title: '新春灵兽',
+          //     text: '保存这张新春截图到相册吧'
+          //   });
+          //   shareBtn.innerHTML = `已打开分享<span class="en">Shared</span>`;
+          //   setTimeout(() => { shareBtn.innerHTML = oldHTML; }, 1400);
+          //   return;
+          // }
+
           if (canShareFile) {
-            await navigator.share({
-              files: [file],
-              title: '新春灵兽',
-              text: '保存这张新春截图到相册吧'
-            });
-            shareBtn.innerHTML = `已打开分享<span class="en">Shared</span>`;
-            setTimeout(() => { shareBtn.innerHTML = oldHTML; }, 1400);
-            return;
+            try {
+              await navigator.share({
+                files: [file],
+                title: '新春灵兽',
+                text: '保存这张新春截图到相册吧'
+              });
+              shareBtn.innerHTML = `已打开分享<span class="en">Shared</span>`;
+              setTimeout(() => { shareBtn.innerHTML = oldHTML; }, 1400);
+              return;
+            } catch (e) {
+              console.warn('navigator.share failed, fallback to download/open:', e);
+              // 不要 throw！继续走后面的 url + 下载/打开逻辑
+            }
           }
+
 
           // 备选：下载/打开图片
           const url = URL.createObjectURL(blob);
