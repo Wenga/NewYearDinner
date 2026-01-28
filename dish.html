@@ -91,6 +91,7 @@
     header{
       text-align:center;
       padding-top:8px;
+      position:relative;
     }
     .kicker{
       letter-spacing:.22em;
@@ -106,6 +107,7 @@
       font-size:13px;
       opacity:.86;
       line-height:1.5;
+      margin:0;
     }
     .en{
       display:block;
@@ -154,7 +156,6 @@
     }
     .btn .en{ margin-top:4px; }
 
-    /* 隐藏的相机 input */
     input[type="file"]{ display:none; }
   </style>
 </head>
@@ -170,20 +171,20 @@
 
     <header>
       <div class="kicker">
-        今晚料理
-        <span class="en">Tonight’s Dish</span>
+        新年料理
+        <span class="en">New Year’s Dish</span>
       </div>
 
-      <h1>
-        松露菌菇炖饭
-        <span class="en">Truffle Mushroom Risotto</span>
+      <!-- 标题：由 JS 注入 -->
+      <h1 id="dishName">
+        料理名占位
+        <span class="en" id="dishNameEn">Dish name</span>
       </h1>
 
-      <p class="sub">
-        米粒外柔内韧，菌菇与松露香气层层展开。
-        <span class="en">
-          Creamy yet structured, layered with mushrooms and truffle aroma.
-        </span>
+      <!-- 介绍：由 JS 注入 -->
+      <p class="sub" id="dishDesc">
+        料理介绍占位
+        <span class="en" id="dishDescEn">Dish description</span>
       </p>
     </header>
 
@@ -211,11 +212,67 @@
 
   <script>
     (function(){
+      // 1) 料理数据表：在这里新增/修改菜品
+      // id => { zhName, enName, zhDesc, enDesc }
+      const dishes = {
+        dish1: {
+          zhName: "四川内江甜水面",
+          enName: "Neijiang Sweetwater Noodels",
+          zhDesc: "四川内江极具特色的传统小吃，以其“又粗又长、口感筋道、味甜带辣”而闻名。",
+          enDesc: "A traditional specialty snack from Neijiang, Sichuan, famous for being thick and long, with a chewy texture and a sweet-spicy flavor profile."
+        },
+        dish2: {
+          zhName: "炭烤三文鱼配柚子黄油汁",
+          enName: "Charred Salmon with Yuzu Butter",
+          zhDesc: "外层微焦、内里柔嫩；柚子黄油酸香提鲜，收尾干净。",
+          enDesc: "Lightly charred outside, tender inside; yuzu butter adds a bright finish."
+        },
+        dish3: {
+          zhName: "桂花奶冻配金桔蜜",
+          enName: "Osmanthus Panna Cotta with Kumquat",
+          zhDesc: "桂花清香与奶冻细腻交织，金桔蜜带来轻盈的酸甜。",
+          enDesc: "Silky panna cotta with floral notes, lifted by kumquat sweetness."
+        }
+      };
+
+      // 2) 从 URL 获取 id：优先 ?id=xxx；没有则读 #xxx
+      function getDishId() {
+        const url = new URL(window.location.href);
+        const q = (url.searchParams.get('id') || "").trim();
+        if (q) return q;
+
+        const hash = (window.location.hash || "").replace('#','').trim();
+        return hash || "dish1"; // 默认菜品
+      }
+
+      // 3) 渲染到页面
+      function renderDish(dishId){
+        const dish = dishes[dishId] || dishes["dish1"];
+
+        document.getElementById('dishName').childNodes[0].nodeValue = dish.zhName;
+        document.getElementById('dishNameEn').textContent = dish.enName;
+
+        document.getElementById('dishDesc').childNodes[0].nodeValue = dish.zhDesc;
+        document.getElementById('dishDescEn').textContent = dish.enDesc;
+
+        // 可选：标题也跟着变
+        document.title = `${dish.zhName} | Dinner Dish`;
+      }
+
+      // 4) 相机按钮：只负责唤起系统相机
       const cameraBtn = document.getElementById('cameraBtn');
       const cameraInput = document.getElementById('cameraInput');
 
       cameraBtn.addEventListener('click', () => {
         cameraInput.click();
+      });
+
+      // init
+      renderDish(getDishId());
+
+      // 可选：如果你用 hash 切换，监听 hash 变化实时更新
+      window.addEventListener('hashchange', () => {
+        renderDish(getDishId());
       });
     })();
   </script>
