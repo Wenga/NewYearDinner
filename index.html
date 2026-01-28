@@ -350,13 +350,21 @@
       animation: none !important;
     }
 
-    /* 强制神兽截图时稳定居中 */
-    .screenshot-mode .hatchedHorse{
+    /* 截图模式下的布局修复 */
+    .screenshot-mode .stage {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .screenshot-mode .hatchedHorse {
+      position: relative !important; /* 取消绝对定位 */
+      left: auto !important;
+      top: auto !important;
+      transform: scale(1.1) !important; /* 调整大小，补偿原本 translate 的偏移感 */
+      display: block !important;
       opacity: 1 !important;
-      transform: translate(-50%, -52%) scale(1) !important;
-      filter: none !important;
-      animation: none !important;
-      will-change: auto !important; /* 避免浏览器合成层导致偶发差异 */
+      margin: 0 auto !important;
     }
 
   </style>
@@ -660,15 +668,22 @@
           const clonedHorse = clone.querySelector('#hatchedHorse');
           if (clonedHorse && hatchedHorse && hatchedHorse.src) {
             clonedHorse.src = hatchedHorse.src;
-            clonedHorse.classList.add('show');
-            // 强制最终 transform（避免偶发 transform 丢失）
+            // 强制移除可能干扰 html2canvas 的 transform
+            clonedHorse.style.position = 'relative';
+            clonedHorse.style.left = '0';
+            clonedHorse.style.top = '0';
+            clonedHorse.style.transform = 'none'; 
             clonedHorse.style.display = 'block';
-            clonedHorse.style.left = '50%';
-            clonedHorse.style.top = '50%';
-            clonedHorse.style.transform = 'translate(-50%, -52%) scale(1)';
-            clonedHorse.style.filter = 'none';
-            clonedHorse.style.animation = 'none';
-          }
+            clonedHorse.style.opacity = '1';
+        }
+
+        // 确保父容器 stage 在克隆体中也是 Flex
+        const clonedStage = clone.querySelector('.stage');
+        if (clonedStage) {
+            clonedStage.style.display = 'flex';
+            clonedStage.style.alignItems = 'center';
+            clonedStage.style.justifyContent = 'center';
+        }
 
           // 2) 截图时隐藏 clone 内的按钮区（不影响原页面布局）
           const cloneActions = clone.querySelector('.actions');
