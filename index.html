@@ -670,11 +670,10 @@
             clonedHorse.src = hatchedHorse.src;
             // 强制移除可能干扰 html2canvas 的 transform
             clonedHorse.style.position = 'relative';
-            clonedHorse.style.left = '0';
-            clonedHorse.style.top = '0';
             clonedHorse.style.transform = 'none'; 
             clonedHorse.style.display = 'block';
             clonedHorse.style.opacity = '1';
+            clonedHorse.style.width = '100%';
         }
 
         // 确保父容器 stage 在克隆体中也是 Flex
